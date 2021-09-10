@@ -176,6 +176,7 @@ FSReqPromise<AliasedBufferT>::FSReqPromise(
 template <typename AliasedBufferT>
 void FSReqPromise<AliasedBufferT>::Reject(v8::Local<v8::Value> reject) {
   finished_ = true;
+  EnvironmentScope env_scope(env());
   v8::HandleScope scope(env()->isolate());
   InternalCallbackScope callback_scope(this);
   v8::Local<v8::Value> value =
@@ -188,6 +189,7 @@ void FSReqPromise<AliasedBufferT>::Reject(v8::Local<v8::Value> reject) {
 template <typename AliasedBufferT>
 void FSReqPromise<AliasedBufferT>::Resolve(v8::Local<v8::Value> value) {
   finished_ = true;
+  EnvironmentScope env_scope(env());
   v8::HandleScope scope(env()->isolate());
   InternalCallbackScope callback_scope(this);
   v8::Local<v8::Value> val =

@@ -157,6 +157,7 @@ void ares_sockstate_cb(void* data, ares_socket_t sock, int read, int write) {
 }
 
 Local<Array> HostentToNames(Environment* env, struct hostent* host) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
 
   std::vector<Local<Value>> names;
@@ -203,7 +204,8 @@ int ParseGeneralReply(
     int* type,
     Local<Array> ret,
     void* addrttls = nullptr,
-    int* naddrttls = nullptr) {
+                      int* naddrttls = nullptr) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   hostent* host;
 
@@ -285,7 +287,8 @@ int ParseMxReply(
     const unsigned char* buf,
     int len,
     Local<Array> ret,
-    bool need_type = false) {
+                 bool need_type = false) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
 
   struct ares_mx_reply* mx_start;
@@ -321,6 +324,7 @@ int ParseCaaReply(
     int len,
     Local<Array> ret,
     bool need_type = false) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
 
   struct ares_caa_reply* caa_start;
@@ -357,6 +361,7 @@ int ParseTxtReply(
     int len,
     Local<Array> ret,
     bool need_type = false) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
 
   struct ares_txt_ext* txt_out;
@@ -421,6 +426,7 @@ int ParseSrvReply(
     int len,
     Local<Array> ret,
     bool need_type = false) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
 
   struct ares_srv_reply* srv_start;
@@ -463,6 +469,7 @@ int ParseNaptrReply(
     int len,
     Local<Array> ret,
     bool need_type = false) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
 
   ares_naptr_reply* naptr_start;
@@ -515,6 +522,7 @@ int ParseSoaReply(
     unsigned char* buf,
     int len,
     Local<Object>* ret) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope handle_scope(env->isolate());
 
   // Manage memory using standardard smart pointer std::unique_tr
@@ -897,6 +905,7 @@ int AnyTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1064,6 +1073,7 @@ int ATraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1098,6 +1108,7 @@ int AaaaTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1132,6 +1143,7 @@ int CaaTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1154,6 +1166,7 @@ int CnameTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1177,6 +1190,7 @@ int MxTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1200,6 +1214,7 @@ int NsTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1223,6 +1238,7 @@ int TxtTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1245,6 +1261,7 @@ int SrvTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1267,6 +1284,7 @@ int PtrTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1291,6 +1309,7 @@ int NaptrTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1313,6 +1332,7 @@ int SoaTraits::Parse(
   int len = response->buf.size;
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1392,6 +1412,7 @@ int ReverseTraits::Parse(
   struct hostent* host = response->host.get();
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   wrap->CallOnComplete(HostentToNames(env, host));
@@ -1432,6 +1453,7 @@ void AfterGetAddrInfo(uv_getaddrinfo_t* req, int status, struct addrinfo* res) {
       static_cast<GetAddrInfoReqWrap*>(req->data)};
   Environment* env = req_wrap->env();
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1507,6 +1529,7 @@ void AfterGetNameInfo(uv_getnameinfo_t* req,
       static_cast<GetNameInfoReqWrap*>(req->data)};
   Environment* env = req_wrap->env();
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

@@ -431,6 +431,7 @@ Environment* SyncProcessRunner::env() const {
 }
 
 MaybeLocal<Object> SyncProcessRunner::Run(Local<Value> options) {
+  EnvironmentScope env_scope(env());
   EscapableHandleScope scope(env()->isolate());
 
   CHECK_EQ(lifecycle_, kUninitialized);
@@ -675,6 +676,7 @@ void SyncProcessRunner::SetPipeError(int pipe_error) {
 
 
 Local<Object> SyncProcessRunner::BuildResultObject() {
+  EnvironmentScope env_scope(env());
   EscapableHandleScope scope(env()->isolate());
   Local<Context> context = env()->context();
 
@@ -728,6 +730,7 @@ Local<Array> SyncProcessRunner::BuildOutputArray() {
   CHECK_GE(lifecycle_, kInitialized);
   CHECK(!stdio_pipes_.empty());
 
+  EnvironmentScope env_scope(env());
   EscapableHandleScope scope(env()->isolate());
   MaybeStackBuffer<Local<Value>, 8> js_output(stdio_pipes_.size());
 
@@ -744,6 +747,7 @@ Local<Array> SyncProcessRunner::BuildOutputArray() {
 }
 
 Maybe<int> SyncProcessRunner::ParseOptions(Local<Value> js_value) {
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope scope(isolate);
   int r;
@@ -849,6 +853,7 @@ Maybe<int> SyncProcessRunner::ParseOptions(Local<Value> js_value) {
 
 
 int SyncProcessRunner::ParseStdioOptions(Local<Value> js_value) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Local<Array> js_stdio_options;
 
@@ -890,7 +895,7 @@ int SyncProcessRunner::ParseStdioOption(int child_fd,
   Local<Value> js_type =
       js_stdio_option->Get(context, env()->type_string()).ToLocalChecked();
 
-  if (js_type->StrictEquals(env()->ignore_string())) {
+  if (js_type->StrictEquals(env()->ignore_string()) || (child_fd == 0 && env()->is_monitor_mode())) {
     return AddStdioIgnore(child_fd);
 
   } else if (js_type->StrictEquals(env()->pipe_string())) {

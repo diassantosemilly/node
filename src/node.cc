@@ -173,6 +173,7 @@ MaybeLocal<Value> ExecuteBootstrapper(Environment* env,
                                       const char* id,
                                       std::vector<Local<String>>* parameters,
                                       std::vector<Local<Value>>* arguments) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   MaybeLocal<Function> maybe_fn =
       NativeModuleEnv::LookupAndCompile(env->context(), id, parameters, env);
@@ -296,6 +297,7 @@ void Environment::InitializeDiagnostics() {
 }
 
 MaybeLocal<Value> Environment::BootstrapInternalLoaders() {
+  EnvironmentScope env_scope(this);
   EscapableHandleScope scope(isolate_);
 
   // Create binding loaders
@@ -337,6 +339,7 @@ MaybeLocal<Value> Environment::BootstrapInternalLoaders() {
 }
 
 MaybeLocal<Value> Environment::BootstrapNode() {
+  EnvironmentScope env_scope(this);
   EscapableHandleScope scope(isolate_);
 
   Local<Object> global = context()->Global();
@@ -396,6 +399,7 @@ MaybeLocal<Value> Environment::BootstrapNode() {
 }
 
 MaybeLocal<Value> Environment::RunBootstrapping() {
+  EnvironmentScope env_scope(this);
   EscapableHandleScope scope(isolate_);
 
   CHECK(!has_run_bootstrapping_code());
@@ -427,8 +431,8 @@ void MarkBootstrapComplete(const FunctionCallbackInfo<Value>& args) {
       performance::NODE_PERFORMANCE_MILESTONE_BOOTSTRAP_COMPLETE);
 }
 
-static
-MaybeLocal<Value> StartExecution(Environment* env, const char* main_script_id) {
+static MaybeLocal<Value> StartExecution(Environment* env, const char* main_script_id) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   CHECK_NOT_NULL(main_script_id);
 
@@ -460,6 +464,7 @@ MaybeLocal<Value> StartExecution(Environment* env, StartExecutionCallback cb) {
       InternalCallbackScope::kSkipAsyncHooks);
 
   if (cb != nullptr) {
+    EnvironmentScope env_scope(env);
     EscapableHandleScope scope(env->isolate());
 
     if (StartExecution(env, "internal/bootstrap/environment").IsEmpty())
@@ -956,13 +961,25 @@ int InitializeNodeWithArgs(std::vector<std::string>* argv,
   return 0;
 }
 
-InitializationResult InitializeOncePerProcess(int argc, char** argv) {
-  return InitializeOncePerProcess(argc, argv, kDefaultInitialization);
+InitializationResult InitializeOncePerProcess(int argc,
+  char** argv,
+  int exec_argc,
+  char** exec_argv,
+  InitializationSettingsFlags flags);
+
+InitializationResult InitializeOncePerProcess(int argc,
+                                              char** argv,
+                                              int exec_argc,
+                                              char** exec_argv) {
+  return InitializeOncePerProcess(
+      argc, argv, exec_argc, exec_argv, kDefaultInitialization);
 }
 
 InitializationResult InitializeOncePerProcess(
   int argc,
   char** argv,
+  int exec_argc,
+  char** exec_argv,
   InitializationSettingsFlags flags) {
   uint64_t init_flags = flags;
   if (init_flags & kDefaultInitialization) {
@@ -985,6 +1002,7 @@ InitializationResult InitializeOncePerProcess(
 
   InitializationResult result;
   result.args = std::vector<std::string>(argv, argv + argc);
+  result.exec_args = std::vector<std::string>(exec_argv, exec_argv + exec_argc);
   std::vector<std::string> errors;
 
   // This needs to run *before* V8::Initialize().
@@ -1095,6 +1113,16 @@ InitializationResult InitializeOncePerProcess(
 }
   per_process::v8_platform.Initialize(
       static_cast<int>(per_process::cli_options->v8_thread_pool_size));
+
+  std::string cfxIcuPath;
+  credentials::SafeGetenv("CFX_ICU_PATH", &cfxIcuPath);
+
+  char exePath[1024];
+  size_t exePathSize = sizeof(exePath);
+
+  uv_exepath(exePath, &exePathSize);
+  V8::InitializeICUDefaultLocation(exePath, !cfxIcuPath.empty() ? cfxIcuPath.c_str() : nullptr);
+
   if (init_flags & kInitializeV8) {
     V8::Initialize();
   }
@@ -1122,8 +1150,8 @@ void TearDownOncePerProcess() {
   per_process::v8_platform.Dispose();
 }
 
-int Start(int argc, char** argv) {
-  InitializationResult result = InitializeOncePerProcess(argc, argv);
+int Start(int argc, char** argv, int exec_argc, char** exec_argv) {
+  InitializationResult result = InitializeOncePerProcess(argc, argv, exec_argc, exec_argv);
   if (result.early_return) {
     return result.exit_code;
   }

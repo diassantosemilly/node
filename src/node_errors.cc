@@ -211,6 +211,7 @@ void AppendExceptionLine(Environment* env,
                          enum ErrorHandlingMode mode) {
   if (message.IsEmpty()) return;
 
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Local<Object> err_obj;
   if (!er.IsEmpty() && er->IsObject()) {
@@ -295,6 +296,7 @@ static void ReportFatalException(Environment* env,
   Isolate* isolate = env->isolate();
   CHECK(!error.IsEmpty());
   CHECK(!message.IsEmpty());
+  EnvironmentScope env_scope(env);
   HandleScope scope(isolate);
 
   AppendExceptionLine(env, error, message, FATAL_ERROR);
@@ -454,6 +456,7 @@ namespace errors {
 
 TryCatchScope::~TryCatchScope() {
   if (HasCaught() && !HasTerminated() && mode_ == CatchMode::kFatal) {
+    EnvironmentScope env_scope(env_);
     HandleScope scope(env_->isolate());
     Local<v8::Value> exception = Exception();
     Local<v8::Message> message = Message();
@@ -928,6 +931,7 @@ void TriggerUncaughtException(Isolate* isolate,
                               Local<Message> message,
                               bool from_promise) {
   CHECK(!error.IsEmpty());
+  EnvironmentScope env_scope(isolate);
   HandleScope scope(isolate);
 
   if (message.IsEmpty()) message = Exception::CreateMessage(isolate, error);
@@ -1031,6 +1035,7 @@ void TriggerUncaughtException(Isolate* isolate, const v8::TryCatch& try_catch) {
   // process._fatalException() in the JS land.
   CHECK(!try_catch.HasTerminated());
   CHECK(try_catch.HasCaught());
+  EnvironmentScope env_scope(isolate);
   HandleScope scope(isolate);
   TriggerUncaughtException(isolate,
                            try_catch.Exception(),

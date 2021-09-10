@@ -344,6 +344,7 @@ void CipherBase::CommonInit(const char* cipher_type,
 void CipherBase::Init(const char* cipher_type,
                       const ArrayBufferOrViewContents<unsigned char>& key_buf,
                       unsigned int auth_tag_len) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   MarkPopErrorOnReturn mark_pop_error_on_return;
 #if OPENSSL_VERSION_MAJOR >= 3
@@ -416,6 +417,7 @@ void CipherBase::InitIv(const char* cipher_type,
                         const ByteSource& key_buf,
                         const ArrayBufferOrViewContents<unsigned char>& iv_buf,
                         unsigned int auth_tag_len) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   MarkPopErrorOnReturn mark_pop_error_on_return;
 

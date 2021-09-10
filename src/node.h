@@ -213,10 +213,20 @@ namespace node {
 
 class IsolateData;
 class Environment;
+class EnvironmentScope {
+ public:
+  EnvironmentScope(const Environment* env);
+  EnvironmentScope(v8::Isolate* isolate);
+
+  ~EnvironmentScope();
+
+ private:
+  const Environment* env_;
+};
 
 // TODO(addaleax): Officially deprecate this and replace it with something
 // better suited for a public embedder API.
-NODE_EXTERN int Start(int argc, char* argv[]);
+NODE_EXTERN int Start(int argc, char* argv[], int exec_argc, char* exec_argv[]);
 
 // Tear down Node.js while it is running (there are active handles
 // in the loop and / or actively executing JavaScript code).
@@ -454,6 +464,12 @@ NODE_EXTERN v8::MaybeLocal<v8::Value> LoadEnvironment(
     const char* main_script_source_utf8);
 NODE_EXTERN void FreeEnvironment(Environment* env);
 
+NODE_EXTERN void SetScopeHandler(
+    const std::function<void(const Environment*)>& enter,
+    const std::function<void(const Environment*)>& exit);
+
+NODE_EXTERN v8::Isolate* GetIsolate(const Environment* env);
+
 // Set a callback that is called when process.exit() is called from JS,
 // overriding the default handler.
 // It receives the Environment* instance and the exit code as arguments.
@@ -647,6 +663,7 @@ inline void NODE_SET_METHOD(v8::Local<v8::Template> recv,
                             const char* name,
                             v8::FunctionCallback callback) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  //EnvironmentScope env_scope(isolate);
   v8::HandleScope handle_scope(isolate);
   v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate,
                                                                 callback);
@@ -661,6 +678,7 @@ inline void NODE_SET_METHOD(v8::Local<v8::Object> recv,
                             const char* name,
                             v8::FunctionCallback callback) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  //EnvironmentScope env_scope(isolate);
   v8::HandleScope handle_scope(isolate);
   v8::Local<v8::Context> context = isolate->GetCurrentContext();
   v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New(isolate,
@@ -679,6 +697,7 @@ inline void NODE_SET_PROTOTYPE_METHOD(v8::Local<v8::FunctionTemplate> recv,
                                       const char* name,
                                       v8::FunctionCallback callback) {
   v8::Isolate* isolate = v8::Isolate::GetCurrent();
+  //EnvironmentScope env_scope(isolate);
   v8::HandleScope handle_scope(isolate);
   v8::Local<v8::Signature> s = v8::Signature::New(isolate, recv);
   v8::Local<v8::FunctionTemplate> t =

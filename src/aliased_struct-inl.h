@@ -13,6 +13,7 @@ template <typename T>
 template <typename... Args>
 AliasedStruct<T>::AliasedStruct(v8::Isolate* isolate, Args&&... args)
     : isolate_(isolate) {
+  EnvironmentScope env_scope(isolate);
   const v8::HandleScope handle_scope(isolate);
 
   store_ = v8::ArrayBuffer::NewBackingStore(isolate, sizeof(T));

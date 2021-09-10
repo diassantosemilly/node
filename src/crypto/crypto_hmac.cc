@@ -59,6 +59,7 @@ void Hmac::New(const FunctionCallbackInfo<Value>& args) {
 }
 
 void Hmac::HmacInit(const char* hash_type, const char* key, int key_len) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
 
   const EVP_MD* md = EVP_get_digestbyname(hash_type);

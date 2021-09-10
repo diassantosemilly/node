@@ -1040,6 +1040,8 @@ class Environment : public MemoryRetainer {
       BaseObjectPtr<BaseObject>,
       FastStringKey::Hash> BindingDataStore;
 
+  static void SetScopeHandler(const std::function<void(const Environment*)>& enter, const std::function<void(const Environment*)>& exit);
+
   // Create an Environment without initializing a main Context. Use
   // InitializeMainContext() to initialize a main context for it.
   Environment(IsolateData* isolate_data,
@@ -1077,6 +1079,10 @@ class Environment : public MemoryRetainer {
 
   void RegisterHandleCleanups();
   void CleanupHandles();
+
+  void EnterScope() const;
+  void ExitScope() const;
+
   void Exit(int code);
   void ExitEnv();
 
@@ -1427,6 +1433,8 @@ class Environment : public MemoryRetainer {
   inline void set_heap_prof_interval(uint64_t interval);
   inline uint64_t heap_prof_interval() const;
 
+  inline bool is_monitor_mode() const { return is_monitor_mode_; }
+
 #endif  // HAVE_INSPECTOR
 
   inline void set_main_utf16(std::unique_ptr<v8::String::Value>);
@@ -1533,6 +1541,8 @@ class Environment : public MemoryRetainer {
   std::unique_ptr<inspector::Agent> inspector_agent_;
   bool is_in_inspector_console_call_ = false;
 #endif
+
+  bool is_monitor_mode_;
 
   std::list<DeserializeRequest> deserialize_requests_;
 

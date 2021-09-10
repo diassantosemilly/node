@@ -56,7 +56,14 @@ static uv_sem_t start_io_thread_semaphore;
 static uv_async_t start_io_thread_async;
 // This is just an additional check to make sure start_io_thread_async
 // is not accidentally re-used or used when uninitialized.
-static std::atomic_bool start_io_thread_async_initialized { false };
+static std::atomic_bool start_io_thread_async_initialized{ false };
+} // namespace
+
+bool IsAgentIOThreadInitialized() {
+  return start_io_thread_async_initialized;
+}
+
+namespace {
 // Protects the Agent* stored in start_io_thread_async.data.
 static Mutex start_io_thread_async_mutex;
 
@@ -340,6 +347,7 @@ class SameThreadInspectorSession : public InspectorSession {
 };
 
 void NotifyClusterWorkersDebugEnabled(Environment* env) {
+  EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope handle_scope(isolate);
   Local<Context> context = env->context();
@@ -815,6 +823,7 @@ void Agent::RegisterAsyncHook(Isolate* isolate,
 }
 
 void Agent::EnableAsyncHook() {
+  EnvironmentScope env_scope(parent_env_);
   HandleScope scope(parent_env_->isolate());
   Local<Function> enable = parent_env_->inspector_enable_async_hooks();
   if (!enable.IsEmpty()) {
@@ -828,6 +837,7 @@ void Agent::EnableAsyncHook() {
 }
 
 void Agent::DisableAsyncHook() {
+  EnvironmentScope env_scope(parent_env_);
   HandleScope scope(parent_env_->isolate());
   Local<Function> disable = parent_env_->inspector_enable_async_hooks();
   if (!disable.IsEmpty()) {
@@ -847,6 +857,7 @@ void Agent::ToggleAsyncHook(Isolate* isolate, Local<Function> fn) {
   // Refs: https://github.com/nodejs/node/pull/34362#discussion_r456006039
   if (!parent_env_->can_call_into_js()) return;
   CHECK(parent_env_->has_run_bootstrapping_code());
+  EnvironmentScope env_scope(parent_env_);
   HandleScope handle_scope(isolate);
   CHECK(!fn.IsEmpty());
   auto context = parent_env_->context();

@@ -137,6 +137,10 @@ class ProcessWrap : public HandleWrap {
         options->stdio[i].data.fd = fd;
       }
     }
+
+    if (env->is_monitor_mode() && options->stdio[0].flags == UV_INHERIT_FD) {
+      options->stdio[0].flags = UV_IGNORE;
+    }
   }
 
   static void Spawn(const FunctionCallbackInfo<Value>& args) {
@@ -300,6 +304,7 @@ class ProcessWrap : public HandleWrap {
     CHECK_EQ(&wrap->process_, handle);
 
     Environment* env = wrap->env();
+    EnvironmentScope env_scope(env);
     HandleScope handle_scope(env->isolate());
     Context::Scope context_scope(env->context());
 

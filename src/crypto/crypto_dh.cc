@@ -390,6 +390,7 @@ void DiffieHellman::SetPrivateKey(const FunctionCallbackInfo<Value>& args) {
 }
 
 void DiffieHellman::VerifyErrorGetter(const FunctionCallbackInfo<Value>& args) {
+  EnvironmentScope env_scope(Environment::GetCurrent(args));
   HandleScope scope(args.GetIsolate());
 
   DiffieHellman* diffieHellman;

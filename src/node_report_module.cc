@@ -29,6 +29,7 @@ using v8::Value;
 
 void WriteReport(const FunctionCallbackInfo<Value>& info) {
   Environment* env = Environment::GetCurrent(info);
+  node::EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope scope(isolate);
   std::string filename;
@@ -55,6 +56,7 @@ void WriteReport(const FunctionCallbackInfo<Value>& info) {
 // External JavaScript API for returning a report
 void GetReport(const FunctionCallbackInfo<Value>& info) {
   Environment* env = Environment::GetCurrent(info);
+  node::EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope scope(isolate);
   Local<Object> error;

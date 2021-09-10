@@ -126,6 +126,7 @@ StreamBase::StreamBase(Environment* env) : env_(env) {
 int StreamBase::Shutdown(v8::Local<v8::Object> req_wrap_obj) {
   Environment* env = stream_env();
 
+  EnvironmentScope env_scope(env);
   v8::HandleScope handle_scope(env->isolate());
 
   if (req_wrap_obj.IsEmpty()) {
@@ -179,6 +180,7 @@ StreamWriteResult StreamBase::Write(
     }
   }
 
+  EnvironmentScope env_scope(env);
   v8::HandleScope handle_scope(env->isolate());
 
   if (req_wrap_obj.IsEmpty()) {
@@ -279,6 +281,7 @@ void StreamReq::Done(int status, const char* error_str) {
   AsyncWrap* async_wrap = GetAsyncWrap();
   Environment* env = async_wrap->env();
   if (error_str != nullptr) {
+    EnvironmentScope env_scope(env);
     v8::HandleScope handle_scope(env->isolate());
     async_wrap->object()->Set(env->context(),
                               env->error_string(),

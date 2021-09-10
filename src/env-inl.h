@@ -23,7 +23,6 @@
 #define SRC_ENV_INL_H_
 
 #if defined(NODE_WANT_INTERNALS) && NODE_WANT_INTERNALS
-
 #include "aliased_buffer.h"
 #include "callback_queue-inl.h"
 #include "env.h"
@@ -209,6 +208,7 @@ inline bool AsyncHooks::pop_async_context(double async_id) {
   }
 
   if (UNLIKELY(js_execution_async_resources()->Length() > offset)) {
+    EnvironmentScope env_scope(env());
     v8::HandleScope handle_scope(env()->isolate());
     USE(js_execution_async_resources()->Set(
         env()->context(),
@@ -220,6 +220,7 @@ inline bool AsyncHooks::pop_async_context(double async_id) {
 }
 
 void AsyncHooks::clear_async_id_stack() {
+  EnvironmentScope env_scope(env());
   v8::Isolate* isolate = env()->isolate();
   v8::HandleScope handle_scope(isolate);
   if (!js_execution_async_resources_.IsEmpty()) {
@@ -258,6 +259,7 @@ inline void AsyncHooks::AddContext(v8::Local<v8::Context> ctx) {
 }
 
 inline void AsyncHooks::RemoveContext(v8::Local<v8::Context> ctx) {
+  EnvironmentScope env_scope(env());
   v8::Isolate* isolate = env()->isolate();
   v8::HandleScope handle_scope(isolate);
   for (auto it = contexts_.begin(); it != contexts_.end(); it++) {

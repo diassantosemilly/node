@@ -125,6 +125,7 @@ HandleWrap::HandleWrap(Environment* env,
       state_(kInitialized),
       handle_(handle) {
   handle_->data = this;
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   CHECK(env->has_run_bootstrapping_code());
   env->handle_wrap_queue()->PushBack(this);
@@ -137,6 +138,7 @@ void HandleWrap::OnClose(uv_handle_t* handle) {
   wrap->Detach();
 
   Environment* env = wrap->env();
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Context::Scope context_scope(env->context());
 

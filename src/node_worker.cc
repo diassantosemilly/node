@@ -170,6 +170,7 @@ class WorkerThreadData {
       // --stack-size. Reset it to the correct value.
       isolate->SetStackLimit(w->stack_base_);
 
+      EnvironmentScope env_scope(isolate);
       HandleScope handle_scope(isolate);
       isolate_data_.reset(CreateIsolateData(isolate,
                                             &loop_,
@@ -263,6 +264,7 @@ void Worker::Run() {
   {
     Locker locker(isolate_);
     Isolate::Scope isolate_scope(isolate_);
+    EnvironmentScope env_scope(isolate_);
     SealHandleScope outer_seal(isolate_);
 
     DeleteFnPtr<Environment, FreeEnvironment> env_;
@@ -286,6 +288,7 @@ void Worker::Run() {
 
     if (is_stopped()) return;
     {
+      EnvironmentScope env_scope(isolate_);
       HandleScope handle_scope(isolate_);
       Local<Context> context;
       {
@@ -353,6 +356,7 @@ void Worker::Run() {
 }
 
 void Worker::CreateEnvMessagePort(Environment* env) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(isolate_);
   Mutex::ScopedLock lock(mutex_);
   // Set up the message channel for receiving messages in the child.
@@ -374,6 +378,7 @@ void Worker::JoinThread() {
   env()->remove_sub_worker_context(this);
 
   {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(env()->context());
 
@@ -623,6 +628,7 @@ void Worker::StartThread(const FunctionCallbackInfo<Value>& args) {
     char err_buf[128];
     uv_err_name_r(ret, err_buf, sizeof(err_buf));
     {
+      EnvironmentScope env_scope(w->env());
       Isolate* isolate = w->env()->isolate();
       HandleScope handle_scope(isolate);
       THROW_ERR_WORKER_INIT_FAILED(isolate, err_buf);
@@ -733,6 +739,7 @@ void Worker::TakeHeapSnapshot(const FunctionCallbackInfo<Value>& args) {
     CHECK(snapshot);
     env->SetImmediateThreadsafe(
         [taker, snapshot = std::move(snapshot)](Environment* env) mutable {
+          EnvironmentScope env_scope(env);
           HandleScope handle_scope(env->isolate());
           Context::Scope context_scope(env->context());
 

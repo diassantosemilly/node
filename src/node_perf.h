@@ -111,6 +111,7 @@ struct PerformanceEntry {
   }
 
   void Notify(Environment* env) {
+    EnvironmentScope env_scope(env);
     v8::HandleScope handle_scope(env->isolate());
     v8::Context::Scope scope(env->context());
     AliasedUint32Array& observers = env->performance_state()->observers;

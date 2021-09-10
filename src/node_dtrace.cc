@@ -163,6 +163,7 @@ void DTRACE_HTTP_SERVER_REQUEST(const FunctionCallbackInfo<Value>& args) {
     return;
 
   Environment* env = Environment::GetCurrent(args);
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Local<Object> arg0 = Local<Object>::Cast(args[0]);
   Local<Object> headers;
@@ -208,6 +209,7 @@ void DTRACE_HTTP_CLIENT_REQUEST(const FunctionCallbackInfo<Value>& args) {
     return;
 
   Environment* env = Environment::GetCurrent(args);
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   /*

@@ -122,6 +122,7 @@ void BindingData::Deserialize(Local<Context> context,
                               int index,
                               InternalFieldInfo* info) {
   DCHECK_EQ(index, BaseObject::kSlot);
+  EnvironmentScope env_scope(context->GetIsolate());
   HandleScope scope(context->GetIsolate());
   Environment* env = Environment::GetCurrent(context);
   BindingData* binding = env->AddBindingData<BindingData>(context, holder);

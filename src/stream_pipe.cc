@@ -75,9 +75,11 @@ void StreamPipe::Unpipe(bool is_in_deletion) {
 
   // Delay the JS-facing part with SetImmediate, because this might be from
   // inside the garbage collector, so we can’t run JS here.
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   BaseObjectPtr<StreamPipe> strong_ref{this};
   env()->SetImmediate([this, strong_ref](Environment* env) {
+    EnvironmentScope env_scope(env);
     HandleScope handle_scope(env->isolate());
     Context::Scope context_scope(env->context());
     Local<Object> object = this->object();
@@ -169,6 +171,7 @@ void StreamPipe::WritableListener::OnStreamAfterWrite(WriteWrap* w,
   if (pipe->is_closed_) {
     if (pipe->pending_writes_ == 0) {
       Environment* env = pipe->env();
+      EnvironmentScope env_scope(env);
       HandleScope handle_scope(env->isolate());
       Context::Scope context_scope(env->context());
       pipe->MakeCallback(env->oncomplete_string(), 0, nullptr).ToLocalChecked();
@@ -178,6 +181,7 @@ void StreamPipe::WritableListener::OnStreamAfterWrite(WriteWrap* w,
   }
 
   if (pipe->is_eof_) {
+    EnvironmentScope env_scope(pipe->env());
     HandleScope handle_scope(pipe->env()->isolate());
     InternalCallbackScope callback_scope(pipe,
         InternalCallbackScope::kSkipTaskQueues);
@@ -229,6 +233,7 @@ void StreamPipe::WritableListener::OnStreamWantsWrite(size_t suggested_size) {
   pipe->wanted_data_ = suggested_size;
   if (pipe->is_reading_ || pipe->is_closed_)
     return;
+  EnvironmentScope env_scope(pipe->env());
   HandleScope handle_scope(pipe->env()->isolate());
   InternalCallbackScope callback_scope(pipe,
       InternalCallbackScope::kSkipTaskQueues);

@@ -12,6 +12,10 @@
 #endif
 
 namespace node {
+namespace inspector {
+extern bool IsAgentIOThreadInitialized();
+}
+
 using errors::TryCatchScope;
 using v8::Array;
 using v8::Context;
@@ -339,11 +343,14 @@ Environment* CreateEnvironment(
   Isolate* isolate = context->GetIsolate();
   HandleScope handle_scope(isolate);
   Context::Scope context_scope(context);
+  auto cfxFlags = ((!inspector::IsAgentIOThreadInitialized())) ? EnvironmentFlags::kOwnsInspector : 0;
+  cfxFlags |= EnvironmentFlags::kOwnsProcessState;
+
   // TODO(addaleax): This is a much better place for parsing per-Environment
   // options than the global parse call.
   Environment* env = new Environment(
-      isolate_data, context, args, exec_args, nullptr, flags, thread_id);
-#if HAVE_INSPECTOR
+      isolate_data, context, args, exec_args, nullptr, static_cast<EnvironmentFlags::Flags>((flags | cfxFlags) & ~(EnvironmentFlags::kDefaultFlags)), thread_id);
+#if HAVE_INSPECTOR && NODE_USE_V8_PLATFORM
   if (inspector_parent_handle) {
     env->InitializeInspector(
         std::move(static_cast<InspectorParentHandleImpl*>(
@@ -437,6 +444,16 @@ MaybeLocal<Value> LoadEnvironment(
             env->native_module_require()};
         return ExecuteBootstrapper(env, name.c_str(), &params, &args);
       });
+}
+
+void SetScopeHandler(const std::function<void(const Environment*)>& enter, const std::function<void(const Environment*)>& exit)
+{
+  Environment::SetScopeHandler(enter, exit);
+}
+
+v8::Isolate* GetIsolate(const Environment* env)
+{
+  return env->isolate();
 }
 
 Environment* GetCurrentEnvironment(Local<Context> context) {

@@ -56,6 +56,7 @@ JSUDPWrap::JSUDPWrap(Environment* env, Local<Object> obj)
 }
 
 int JSUDPWrap::RecvStart() {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Context::Scope context_scope(env()->context());
   TryCatchScope try_catch(env());
@@ -70,6 +71,7 @@ int JSUDPWrap::RecvStart() {
 }
 
 int JSUDPWrap::RecvStop() {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Context::Scope context_scope(env()->context());
   TryCatchScope try_catch(env());
@@ -86,6 +88,7 @@ int JSUDPWrap::RecvStop() {
 ssize_t JSUDPWrap::Send(uv_buf_t* bufs,
                         size_t nbufs,
                         const sockaddr* addr) {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Context::Scope context_scope(env()->context());
   TryCatchScope try_catch(env());

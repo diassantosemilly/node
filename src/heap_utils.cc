@@ -87,6 +87,7 @@ class JSGraph : public EmbedderGraph {
   }
 
   MaybeLocal<Array> CreateObject() const {
+    EnvironmentScope env_scope(Environment::GetCurrent(isolate_));
     EscapableHandleScope handle_scope(isolate_);
     Local<Context> context = isolate_->GetCurrentContext();
     Environment* env = Environment::GetCurrent(context);
@@ -105,6 +106,7 @@ class JSGraph : public EmbedderGraph {
       info_objects[n.get()] = Object::New(isolate_);
 
     {
+      EnvironmentScope env_scope(env);
       HandleScope handle_scope(isolate_);
       size_t i = 0;
       for (const std::unique_ptr<Node>& n : nodes_) {
@@ -332,6 +334,7 @@ void DeleteHeapSnapshot(const HeapSnapshot* snapshot) {
 
 BaseObjectPtr<AsyncWrap> CreateHeapSnapshotStream(
     Environment* env, HeapSnapshotPointer&& snapshot) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   if (env->streambaseoutputstream_constructor_template().IsEmpty()) {

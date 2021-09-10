@@ -79,6 +79,7 @@ void OnClientHello(
     const ClientHelloParser::ClientHello& hello) {
   TLSWrap* w = static_cast<TLSWrap*>(arg);
   Environment* env = w->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -115,6 +116,7 @@ void OnClientHello(
 void KeylogCallback(const SSL* s, const char* line) {
   TLSWrap* w = static_cast<TLSWrap*>(SSL_get_app_data(s));
   Environment* env = w->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -132,6 +134,7 @@ void KeylogCallback(const SSL* s, const char* line) {
 int NewSessionCallback(SSL* s, SSL_SESSION* sess) {
   TLSWrap* w = static_cast<TLSWrap*>(SSL_get_app_data(s));
   Environment* env = w->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -198,6 +201,7 @@ int SSLCertCallback(SSL* s, void* arg) {
     return -1;
 
   Environment* env = w->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   w->set_cert_cb_running();
@@ -234,6 +238,7 @@ int SelectALPNCallback(
     void* arg) {
   TLSWrap* w = static_cast<TLSWrap*>(SSL_get_app_data(s));
   Environment* env = w->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -265,6 +270,7 @@ int SelectALPNCallback(
 int TLSExtStatusCallback(SSL* s, void* arg) {
   TLSWrap* w = static_cast<TLSWrap*>(SSL_get_app_data(s));
   Environment* env = w->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
 
   if (w->is_client()) {
@@ -510,6 +516,7 @@ void TLSWrap::SSLInfoCallback(const SSL* ssl_, int where, int ret) {
   SSL* ssl = const_cast<SSL*>(ssl_);
   TLSWrap* c = static_cast<TLSWrap*>(SSL_get_app_data(ssl_));
   Environment* env = c->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   Local<Object> object = c->object();
@@ -622,6 +629,7 @@ void TLSWrap::EncOut() {
 
   if (!res.async) {
     Debug(this, "Write finished synchronously");
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
 
     // Simulate asynchronous finishing, TLS cannot handle this at the moment.
@@ -673,6 +681,7 @@ void TLSWrap::OnStreamAfterWrite(WriteWrap* req_wrap, int status) {
 }
 
 MaybeLocal<Value> TLSWrap::GetSSLError(int status, int* err, std::string* msg) {
+  EnvironmentScope env_scope(env());
   EscapableHandleScope scope(env()->isolate());
 
   // ssl_ is already destroyed in reading EOF by close notify alert.
@@ -815,6 +824,7 @@ void TLSWrap::ClearOut() {
   // shutdown cleanly (SSL_ERROR_ZERO_RETURN) even when read == 0.
   // See node#1642 and SSL_read(3SSL) for details.
   if (read <= 0) {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     int err;
 
@@ -870,6 +880,7 @@ void TLSWrap::ClearIn() {
   }
 
   // Error or partial write
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   Context::Scope context_scope(env()->context());
 
@@ -1308,6 +1319,7 @@ void TLSWrap::SetServername(const FunctionCallbackInfo<Value>& args) {
 int TLSWrap::SelectSNIContextCallback(SSL* s, int* ad, void* arg) {
   TLSWrap* p = static_cast<TLSWrap*>(SSL_get_app_data(s));
   Environment* env = p->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1389,6 +1401,7 @@ unsigned int TLSWrap::PskServerCallback(
   TLSWrap* p = static_cast<TLSWrap*>(SSL_get_app_data(s));
 
   Environment* env = p->env();
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   Local<String> identity_str =
@@ -1431,6 +1444,7 @@ unsigned int TLSWrap::PskClientCallback(
   TLSWrap* p = static_cast<TLSWrap*>(SSL_get_app_data(s));
 
   Environment* env = p->env();
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   Local<Value> argv[] = {

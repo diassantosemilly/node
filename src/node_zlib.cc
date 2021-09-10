@@ -406,6 +406,7 @@ class CompressionStream : public AsyncWrap, public ThreadPoolWork {
     CHECK_EQ(status, 0);
 
     Environment* env = AsyncWrap::env();
+    EnvironmentScope env_scope(env);
     HandleScope handle_scope(env->isolate());
     Context::Scope context_scope(env->context());
 
@@ -429,6 +430,7 @@ class CompressionStream : public AsyncWrap, public ThreadPoolWork {
     // If you hit this assertion, you forgot to enter the v8::Context first.
     CHECK_EQ(env->context(), env->isolate()->GetCurrentContext());
 
+    EnvironmentScope env_scope(env);
     HandleScope scope(env->isolate());
     Local<Value> args[3] = {
       OneByteString(env->isolate(), err.message),

@@ -19,6 +19,7 @@ Maybe<int> SpinEventLoop(Environment* env) {
   MultiIsolatePlatform* platform = GetMultiIsolatePlatform(env);
   CHECK_NOT_NULL(platform);
 
+  //EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope handle_scope(isolate);
   Context::Scope context_scope(env->context());
@@ -99,6 +100,7 @@ CommonEnvironmentSetup::CommonEnvironmentSetup(
     impl_->isolate_data.reset(CreateIsolateData(
         isolate, loop, platform, impl_->allocator.get()));
 
+    //EnvironmentScope env_scope(isolate);
     HandleScope handle_scope(isolate);
     Local<Context> context = NewContext(isolate);
     impl_->context.Reset(isolate, context);

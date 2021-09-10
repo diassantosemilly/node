@@ -404,6 +404,7 @@ void PerIsolatePlatformData::RunForegroundTask(std::unique_ptr<Task> task) {
   DebugSealHandleScope scope(isolate_);
   Environment* env = Environment::GetCurrent(isolate_);
   if (env != nullptr) {
+    EnvironmentScope env_scope(env);
     v8::HandleScope scope(isolate_);
     InternalCallbackScope cb_scope(env, Object::New(isolate_), { 0, 0 },
                                    InternalCallbackScope::kNoFlags);
@@ -428,6 +429,10 @@ void PerIsolatePlatformData::DeleteFromScheduledTasks(DelayedTask* task) {
 
 void PerIsolatePlatformData::RunForegroundTask(uv_timer_t* handle) {
   DelayedTask* delayed = ContainerOf(&DelayedTask::timer, handle);
+
+  v8::Locker locker(delayed->platform_data->isolate_);
+  v8::Isolate::Scope isolate(delayed->platform_data->isolate_);
+
   delayed->platform_data->RunForegroundTask(std::move(delayed->task));
   delayed->platform_data->DeleteFromScheduledTasks(delayed);
 }
@@ -443,6 +448,9 @@ void NodePlatform::DrainTasks(Isolate* isolate) {
 }
 
 bool PerIsolatePlatformData::FlushForegroundTasksInternal() {
+  v8::Locker locker(isolate_);
+  v8::Isolate::Scope isolate(isolate_);
+
   bool did_work = false;
 
   while (std::unique_ptr<DelayedTask> delayed =

@@ -37,6 +37,7 @@ Maybe<bool> EmitProcessBeforeExit(Environment* env) {
   if (!env->destroy_async_id_list()->empty())
     AsyncWrap::DestroyAsyncIdsCallback(env);
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Local<Context> context = env->context();
   Context::Scope context_scope(context);
@@ -60,6 +61,7 @@ int EmitExit(Environment* env) {
 
 Maybe<int> EmitProcessExit(Environment* env) {
   // process.emit('exit')
+  EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope handle_scope(isolate);
   Local<Context> context = env->context();
@@ -187,6 +189,7 @@ async_context EmitAsyncInit(Isolate* isolate,
                             Local<Object> resource,
                             const char* name,
                             async_id trigger_async_id) {
+  EnvironmentScope env_scope(Environment::GetCurrent(isolate));
   HandleScope handle_scope(isolate);
   Local<String> type =
       String::NewFromUtf8(isolate, name, NewStringType::kInternalized)

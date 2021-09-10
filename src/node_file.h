@@ -202,6 +202,7 @@ class FSReqAfterScope final {
  private:
   BaseObjectPtr<FSReqBase> wrap_;
   uv_fs_t* req_ = nullptr;
+  EnvironmentScope env_scope_;
   v8::HandleScope handle_scope_;
   v8::Context::Scope context_scope_;
 };

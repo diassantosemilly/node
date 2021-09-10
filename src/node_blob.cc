@@ -74,6 +74,7 @@ BaseObjectPtr<Blob> Blob::Create(
     const std::vector<BlobEntry> store,
     size_t length) {
 
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   Local<Function> ctor;
@@ -152,6 +153,7 @@ void Blob::MemoryInfo(MemoryTracker* tracker) const {
 }
 
 MaybeLocal<Value> Blob::GetArrayBuffer(Environment* env) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   size_t len = length();
   std::shared_ptr<BackingStore> store =
@@ -324,6 +326,7 @@ void FixedSizeBlobCopyJob::AfterThreadPoolWork(int status) {
   CHECK_EQ(mode_, Mode::ASYNC);
   CHECK(status == 0 || status == UV_ECANCELED);
   std::unique_ptr<FixedSizeBlobCopyJob> ptr(this);
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
   Local<Value> args[2];
@@ -463,8 +466,9 @@ void BlobBindingData::Deserialize(
     int index,
     InternalFieldInfo* info) {
   DCHECK_EQ(index, BaseObject::kSlot);
-  HandleScope scope(context->GetIsolate());
   Environment* env = Environment::GetCurrent(context);
+  EnvironmentScope env_scope(env);
+  HandleScope scope(context->GetIsolate());
   BlobBindingData* binding =
       env->AddBindingData<BlobBindingData>(context, holder);
   CHECK_NOT_NULL(binding);

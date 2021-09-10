@@ -53,6 +53,7 @@ static bool extra_root_certs_loaded = false;
 // Takes a string or buffer and loads it into a BIO.
 // Caller responsible for BIO_free_all-ing the returned object.
 BIOPointer LoadBIO(Environment* env, Local<Value> v) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   if (v->IsString()) {
@@ -1098,6 +1099,7 @@ int SecureContext::TicketKeyCallback(SSL* ssl,
       SSL_CTX_get_app_data(SSL_get_SSL_CTX(ssl)));
 
   Environment* env = sc->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 

@@ -547,6 +547,7 @@ void ThrowCryptoError(Environment* env,
     ERR_error_string_n(err, message_buffer, sizeof(message_buffer));
     message = message_buffer;
   }
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Local<String> exception_string;
   Local<Value> exception;

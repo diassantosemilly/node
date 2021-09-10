@@ -152,6 +152,7 @@ void CallbackInfo::CleanupHook(void* data) {
   CallbackInfo* self = static_cast<CallbackInfo*>(data);
 
   {
+    EnvironmentScope env_scope(self->env_);
     HandleScope handle_scope(self->env_->isolate());
     Local<ArrayBuffer> ab = self->persistent_.Get(self->env_->isolate());
     if (!ab.IsEmpty() && ab->IsDetachable()) {
@@ -298,6 +299,7 @@ MaybeLocal<Uint8Array> New(Isolate* isolate,
 MaybeLocal<Object> New(Isolate* isolate,
                        Local<String> string,
                        enum encoding enc) {
+  EnvironmentScope env_scope(isolate);
   EscapableHandleScope scope(isolate);
 
   size_t length;
@@ -338,6 +340,7 @@ MaybeLocal<Object> New(Isolate* isolate,
 
 
 MaybeLocal<Object> New(Isolate* isolate, size_t length) {
+  EnvironmentScope env_scope(isolate);
   EscapableHandleScope handle_scope(isolate);
   Local<Object> obj;
   Environment* env = Environment::GetCurrent(isolate);
@@ -352,6 +355,7 @@ MaybeLocal<Object> New(Isolate* isolate, size_t length) {
 
 
 MaybeLocal<Object> New(Environment* env, size_t length) {
+  EnvironmentScope env_scope(env);
   Isolate* isolate(env->isolate());
   EscapableHandleScope scope(isolate);
 
@@ -381,6 +385,7 @@ MaybeLocal<Object> New(Environment* env, size_t length) {
 
 
 MaybeLocal<Object> Copy(Isolate* isolate, const char* data, size_t length) {
+  EnvironmentScope env_scope(isolate);
   EscapableHandleScope handle_scope(isolate);
   Environment* env = Environment::GetCurrent(isolate);
   if (env == nullptr) {
@@ -395,6 +400,7 @@ MaybeLocal<Object> Copy(Isolate* isolate, const char* data, size_t length) {
 
 
 MaybeLocal<Object> Copy(Environment* env, const char* data, size_t length) {
+  EnvironmentScope env_scope(env);
   Isolate* isolate(env->isolate());
   EscapableHandleScope scope(isolate);
 
@@ -430,6 +436,7 @@ MaybeLocal<Object> New(Isolate* isolate,
                        size_t length,
                        FreeCallback callback,
                        void* hint) {
+  EnvironmentScope env_scope(isolate);
   EscapableHandleScope handle_scope(isolate);
   Environment* env = Environment::GetCurrent(isolate);
   if (env == nullptr) {
@@ -447,6 +454,7 @@ MaybeLocal<Object> New(Environment* env,
                        size_t length,
                        FreeCallback callback,
                        void* hint) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
 
   if (length > kMaxLength) {
@@ -474,6 +482,7 @@ MaybeLocal<Object> New(Environment* env,
 // Warning: This function needs `data` to be allocated with malloc() and not
 // necessarily isolate's ArrayBuffer::Allocator.
 MaybeLocal<Object> New(Isolate* isolate, char* data, size_t length) {
+  EnvironmentScope env_scope(isolate);
   EscapableHandleScope handle_scope(isolate);
   Environment* env = Environment::GetCurrent(isolate);
   if (env == nullptr) {

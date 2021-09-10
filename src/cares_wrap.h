@@ -258,6 +258,7 @@ class QueryWrap final : public AsyncWrap {
 
   void ParseError(int status) {
     CHECK_NE(status, ARES_SUCCESS);
+    EnvironmentScope env_scope(env());
     v8::HandleScope handle_scope(env()->isolate());
     v8::Context::Scope context_scope(env()->context());
     const char* code = ToErrorCodeString(status);
@@ -363,6 +364,7 @@ class QueryWrap final : public AsyncWrap {
   void CallOnComplete(
       v8::Local<v8::Value> answer,
       v8::Local<v8::Value> extra = v8::Local<v8::Value>()) {
+    EnvironmentScope env_scope(env());
     v8::HandleScope handle_scope(env()->isolate());
     v8::Context::Scope context_scope(env()->context());
     v8::Local<v8::Value> argv[] = {

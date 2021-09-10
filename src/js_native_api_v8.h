@@ -102,6 +102,7 @@ struct napi_env__ {
   }
 
   virtual void CallFinalizer(napi_finalize cb, void* data, void* hint) {
+    node::EnvironmentScope env_scope(isolate);
     v8::HandleScope handle_scope(isolate);
     CallIntoModule([&](napi_env env) {
       cb(env, data, hint);

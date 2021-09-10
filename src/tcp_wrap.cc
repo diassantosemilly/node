@@ -54,6 +54,7 @@ using v8::Value;
 MaybeLocal<Object> TCPWrap::Instantiate(Environment* env,
                                         AsyncWrap* parent,
                                         TCPWrap::SocketType type) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope handle_scope(env->isolate());
   AsyncHooks::DefaultTriggerAsyncIdScope trigger_scope(parent);
   CHECK_EQ(env->tcp_constructor_template().IsEmpty(), false);
@@ -327,6 +328,7 @@ void TCPWrap::Connect(const FunctionCallbackInfo<Value>& args,
 Local<Object> AddressToJS(Environment* env,
                           const sockaddr* addr,
                           Local<Object> info) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   char ip[INET6_ADDRSTRLEN + UV_IF_NAMESIZE];
   const sockaddr_in* a4;

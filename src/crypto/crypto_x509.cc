@@ -103,6 +103,7 @@ MaybeLocal<Object> X509Certificate::New(
     Environment* env,
     std::shared_ptr<ManagedX509> cert,
     STACK_OF(X509)* issuer_chain) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   Local<Function> ctor;
   if (!GetConstructorTemplate(env)->GetFunction(env->context()).ToLocal(&ctor))

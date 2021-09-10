@@ -41,6 +41,7 @@ void node_napi_env__::CallFinalizer(napi_finalize cb, void* data, void* hint) {
   node_env()->SetImmediate(
       [=, liveEnv = std::move(liveEnv)](node::Environment* node_env) {
         napi_env env = liveEnv.env();
+        node::EnvironmentScope env_scope(node_env);
         v8::HandleScope handle_scope(env->isolate);
         v8::Context::Scope context_scope(env->context());
         env->CallIntoModule([&](napi_env env) { cb(env, data, hint); });
@@ -65,6 +66,7 @@ class BufferFinalizer : private Finalizer {
         [finalizer = std::move(finalizer)](node::Environment* env) {
       if (finalizer->_finalize_callback == nullptr) return;
 
+      node::EnvironmentScope env_scope(env);
       v8::HandleScope handle_scope(finalizer->_env->isolate);
       v8::Context::Scope context_scope(finalizer->_env->context());
 
@@ -323,6 +325,7 @@ class ThreadSafeFunction : public node::AsyncResource {
     }
 
     if (popped_value) {
+      node::EnvironmentScope env_scope(env->node_env());
       v8::HandleScope scope(env->isolate);
       CallbackScope cb_scope(this);
       napi_value js_callback = nullptr;
@@ -340,6 +343,7 @@ class ThreadSafeFunction : public node::AsyncResource {
   }
 
   void Finalize() {
+    node::EnvironmentScope env_scope(env->node_env());
     v8::HandleScope scope(env->isolate);
     if (finalize_cb) {
       CallbackScope cb_scope(this);
@@ -351,6 +355,7 @@ class ThreadSafeFunction : public node::AsyncResource {
   }
 
   void CloseHandlesAndMaybeDelete(bool set_closing = false) {
+    node::EnvironmentScope env_scope(env->node_env());
     v8::HandleScope scope(env->isolate);
     if (set_closing) {
       node::Mutex::ScopedLock lock(this->mutex);
@@ -507,6 +512,7 @@ class AsyncContext {
 
   inline void EnsureReference() {
     if (lost_reference_) {
+      node::EnvironmentScope env_scope(node_env());
       const v8::HandleScope handle_scope(node_env()->isolate());
       resource_.Reset(node_env()->isolate(),
                       v8::Object::New(node_env()->isolate()));
@@ -1078,6 +1084,7 @@ class Work : public node::AsyncResource, public node::ThreadPoolWork {
     if (_complete == nullptr)
       return;
 
+    node::EnvironmentScope env_scope(env());
     // Establish a handle scope here so that every callback doesn't have to.
     // Also it is needed for the exception-handling below.
     v8::HandleScope scope(_env->isolate);

@@ -349,6 +349,7 @@ class CryptoJob : public AsyncWrap, public ThreadPoolWork {
     // callback on cancel as that could leave the JS in a pending
     // state (e.g. unresolved promises...)
     if (status == UV_ECANCELED) return;
+    EnvironmentScope env_scope(env);
     v8::HandleScope handle_scope(env->isolate());
     v8::Context::Scope context_scope(env->context());
 

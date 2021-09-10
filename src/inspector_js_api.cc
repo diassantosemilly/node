@@ -72,6 +72,7 @@ class JSBindingsConnection : public AsyncWrap {
 
     void SendMessageToFrontend(const v8_inspector::StringView& message)
         override {
+      EnvironmentScope env_scope(env_);
       Isolate* isolate = env_->isolate();
       HandleScope handle_scope(isolate);
       Context::Scope context_scope(env_->context());

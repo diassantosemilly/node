@@ -75,6 +75,7 @@ void AsyncWrap::DestroyAsyncIdsCallback(Environment* env) {
     for (auto async_id : destroy_async_id_list) {
       // Want each callback to be cleaned up after itself, instead of cleaning
       // them all up after the while() loop completes.
+      EnvironmentScope env_scope(env);
       HandleScope scope(env->isolate());
       Local<Value> async_id_value = Number::New(env->isolate(), async_id);
       MaybeLocal<Value> ret = fn->Call(
@@ -93,6 +94,7 @@ void Emit(Environment* env, double async_id, AsyncHooks::Fields type,
   if (async_hooks->fields()[type] == 0 || !env->can_call_into_js())
     return;
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Local<Value> async_id_value = Number::New(env->isolate(), async_id);
   TryCatchScope try_catch(env, TryCatchScope::CatchMode::kFatal);
@@ -208,6 +210,7 @@ static void DestroyParamCleanupHook(void* ptr) {
 }
 
 void AsyncWrap::WeakCallback(const WeakCallbackInfo<DestroyParam>& info) {
+  EnvironmentScope env_scope(info.GetParameter()->env);
   HandleScope scope(info.GetIsolate());
 
   std::unique_ptr<DestroyParam> p{info.GetParameter()};
@@ -312,6 +315,7 @@ void AsyncWrap::EmitDestroy(bool from_gc) {
   async_id_ = kInvalidAsyncId;
 
   if (!persistent().IsEmpty() && !from_gc) {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     USE(object()->Set(env()->context(), env()->owner_symbol(), object()));
   }
@@ -351,6 +355,7 @@ void AsyncWrap::Initialize(Local<Object> target,
                            Local<Context> context,
                            void* priv) {
   Environment* env = Environment::GetCurrent(context);
+  EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope scope(isolate);
 
@@ -582,6 +587,7 @@ void AsyncWrap::AsyncReset(Local<Object> resource, double execution_async_id,
   trigger_async_id_ = env()->get_default_trigger_async_id();
 
   {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Local<Object> obj = object();
     CHECK(!obj.IsEmpty());
@@ -634,6 +640,7 @@ void AsyncWrap::EmitAsyncInit(Environment* env,
     return;
   }
 
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Local<Function> init_fn = env->async_hooks_init_function();
 
@@ -680,6 +687,7 @@ Local<Object> AsyncWrap::GetOwner() {
 }
 
 Local<Object> AsyncWrap::GetOwner(Environment* env, Local<Object> obj) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope handle_scope(env->isolate());
   CHECK(!obj.IsEmpty());
 

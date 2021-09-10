@@ -376,8 +376,14 @@ MaybeLocal<Promise> FileHandle::ClosePromise() {
   auto AfterClose = uv_fs_callback_t{[](uv_fs_t* req) {
     std::unique_ptr<CloseReq> close(CloseReq::from_req(req));
     CHECK_NOT_NULL(close);
-    close->file_handle()->AfterClose();
+    //close->file_handle()->AfterClose();
     Isolate* isolate = close->env()->isolate();
+    EnvironmentScope env_scope(close->env());
+    v8::HandleScope handleScope(isolate);
+    Local<Context> context = close->env()->context();
+    v8::Context::Scope context_scope(context);
+
+    close->file_handle()->AfterClose();
     if (req->result < 0) {
       HandleScope handle_scope(isolate);
       close->Reject(
@@ -611,6 +617,7 @@ void NewFSReqCallback(const FunctionCallbackInfo<Value>& args) {
 FSReqAfterScope::FSReqAfterScope(FSReqBase* wrap, uv_fs_t* req)
     : wrap_(wrap),
       req_(req),
+      env_scope_(wrap->env()),
       handle_scope_(wrap->env()->isolate()),
       context_scope_(wrap->env()->context()) {
   CHECK_EQ(wrap_->req(), req);

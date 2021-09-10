@@ -266,6 +266,7 @@ Local<Value> Http2Settings::Pack(
     Environment* env,
     size_t count,
     const nghttp2_settings_entry* entries) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   const size_t size = count * 6;
   AllocatedBuffer buffer = AllocatedBuffer::AllocateManaged(env, size);
@@ -691,6 +692,7 @@ void Http2Session::Close(uint32_t code, bool socket_closed) {
   // If we are writing we will get to make the callback in OnStreamAfterWrite.
   if (!is_write_in_progress()) {
     Debug(this, "make done session callback");
+    EnvironmentScope env_scope(env());
     HandleScope scope(env()->isolate());
     MakeCallback(env()->ondone_string(), 0, nullptr);
   }
@@ -989,6 +991,7 @@ int Http2Session::OnInvalidFrame(nghttp2_session* handle,
   if (nghttp2_is_fatal(lib_error_code) ||
       lib_error_code == NGHTTP2_ERR_STREAM_CLOSED) {
     Environment* env = session->env();
+    EnvironmentScope env_scope(env);
     Isolate* isolate = env->isolate();
     HandleScope scope(isolate);
     Local<Context> context = env->context();
@@ -1022,6 +1025,7 @@ int Http2Session::OnFrameNotSent(nghttp2_session* handle,
     return 0;
   }
 
+  EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope scope(isolate);
   Local<Context> context = env->context();
@@ -1053,6 +1057,7 @@ int Http2Session::OnStreamClose(nghttp2_session* handle,
                                 void* user_data) {
   Http2Session* session = static_cast<Http2Session*>(user_data);
   Environment* env = session->env();
+  EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope scope(isolate);
   Local<Context> context = env->context();
@@ -1108,6 +1113,7 @@ int Http2Session::OnDataChunkReceived(nghttp2_session* handle,
   Debug(session, "buffering data chunk for stream %d, size: "
         "%d, flags: %d", id, len, flags);
   Environment* env = session->env();
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   // We should never actually get a 0-length chunk so this check is
@@ -1217,6 +1223,7 @@ int Http2Session::OnNghttpError(nghttp2_session* handle,
   Debug(session, "Error '%s'", message);
   if (strncmp(message, BAD_PEER_MESSAGE, len) == 0) {
     Environment* env = session->env();
+    EnvironmentScope env_scope(env);
     Isolate* isolate = env->isolate();
     HandleScope scope(isolate);
     Local<Context> context = env->context();
@@ -1237,6 +1244,7 @@ void Http2StreamListener::OnStreamRead(ssize_t nread, const uv_buf_t& buf) {
   Http2Stream* stream = static_cast<Http2Stream*>(stream_);
   Http2Session* session = stream->session();
   Environment* env = stream->env();
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1271,6 +1279,7 @@ void Http2StreamListener::OnStreamRead(ssize_t nread, const uv_buf_t& buf) {
 // HEADERS frame has been received and processed. This method converts the
 // received headers into a JavaScript array and pushes those out to JS.
 void Http2Session::HandleHeadersFrame(const nghttp2_frame* frame) {
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope scope(isolate);
   Local<Context> context = env()->context();
@@ -1326,6 +1335,7 @@ void Http2Session::HandleHeadersFrame(const nghttp2_frame* frame) {
 // simply let user code know that the priority has changed.
 void Http2Session::HandlePriorityFrame(const nghttp2_frame* frame) {
   if (js_fields_->priority_listener_count == 0) return;
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope scope(isolate);
   Local<Context> context = env()->context();
@@ -1374,6 +1384,7 @@ int Http2Session::HandleDataFrame(const nghttp2_frame* frame) {
 
 // Called by OnFrameReceived when a complete GOAWAY frame has been received.
 void Http2Session::HandleGoawayFrame(const nghttp2_frame* frame) {
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope scope(isolate);
   Local<Context> context = env()->context();
@@ -1405,6 +1416,7 @@ void Http2Session::HandleGoawayFrame(const nghttp2_frame* frame) {
 // Called by OnFrameReceived when a complete ALTSVC frame has been received.
 void Http2Session::HandleAltSvcFrame(const nghttp2_frame* frame) {
   if (!(js_fields_->bitfield & (1 << kSessionHasAltsvcListeners))) return;
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope scope(isolate);
   Local<Context> context = env()->context();
@@ -1427,6 +1439,7 @@ void Http2Session::HandleAltSvcFrame(const nghttp2_frame* frame) {
 }
 
 void Http2Session::HandleOriginFrame(const nghttp2_frame* frame) {
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope scope(isolate);
   Local<Context> context = env()->context();
@@ -1450,6 +1463,7 @@ void Http2Session::HandleOriginFrame(const nghttp2_frame* frame) {
 
 // Called by OnFrameReceived when a complete PING frame has been received.
 void Http2Session::HandlePingFrame(const nghttp2_frame* frame) {
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope scope(isolate);
   Local<Context> context = env()->context();
@@ -1511,6 +1525,7 @@ void Http2Session::HandleSettingsFrame(const nghttp2_frame* frame) {
   // frames, so this block is purely defensive just in case that behavior
   // changes. Specifically, unlike unsolicited PING acks, unsolicited
   // SETTINGS acks should *never* make it this far.
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope scope(isolate);
   Local<Context> context = env()->context();
@@ -1537,6 +1552,7 @@ void Http2Session::OnStreamAfterWrite(WriteWrap* w, int status) {
   }
 
   if (is_destroyed()) {
+    EnvironmentScope env_scope(env());
     HandleScope scope(env()->isolate());
     MakeCallback(env()->ondone_string(), 0, nullptr);
     return;
@@ -1563,6 +1579,7 @@ void Http2Session::MaybeScheduleWrite() {
     return;
 
   if (nghttp2_session_want_write(session_.get())) {
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Debug(this, "scheduling write");
     set_write_scheduled();
@@ -1577,6 +1594,7 @@ void Http2Session::MaybeScheduleWrite() {
 
       // Sending data may call arbitrary JS code, so keep track of
       // async context.
+      EnvironmentScope env_scope(env);
       HandleScope handle_scope(env->isolate());
       InternalCallbackScope callback_scope(this);
       SendPendingData();
@@ -1828,6 +1846,7 @@ uv_buf_t Http2Session::OnStreamAlloc(size_t suggested_size) {
 
 // Callback used to receive inbound data from the i/o stream
 void Http2Session::OnStreamRead(ssize_t nread, const uv_buf_t& buf_) {
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   Context::Scope context_scope(env()->context());
   Http2Scope h2scope(this);
@@ -2136,6 +2155,7 @@ int Http2Stream::SubmitInfo(const Http2Headers& headers) {
 void Http2Stream::OnTrailers() {
   Debug(this, "let javascript know we are ready for trailers");
   CHECK(!this->is_destroyed());
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope scope(isolate);
   Local<Context> context = env()->context();
@@ -2679,6 +2699,7 @@ void Http2Session::Goaway(const FunctionCallbackInfo<Value>& args) {
 // logic when using the FD Provider.
 void Http2Session::UpdateChunksSent(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
+  EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope scope(isolate);
   Http2Session* session;
@@ -3037,6 +3058,7 @@ void Http2Ping::Done(bool ack, const uint8_t* payload) {
   double duration_ms = duration_ns / 1e6;
   if (session_) session_->statistics_.ping_rtt = duration_ns;
 
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope handle_scope(isolate);
   Context::Scope context_scope(env()->context());
@@ -3102,6 +3124,7 @@ void Initialize(Local<Object> target,
                 Local<Context> context,
                 void* priv) {
   Environment* env = Environment::GetCurrent(context);
+  EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope handle_scope(isolate);
 

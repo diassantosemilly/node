@@ -242,6 +242,7 @@ void TrackingTraceStateObserver::UpdateTraceCategoryState() {
   bool async_hooks_enabled = (*(TRACE_EVENT_API_GET_CATEGORY_GROUP_ENABLED(
                                  TRACING_CATEGORY_NODE1(async_hooks)))) != 0;
 
+  EnvironmentScope env_scope(env_);
   Isolate* isolate = env_->isolate();
   HandleScope handle_scope(isolate);
   Local<Function> cb = env_->trace_category_state_function();
@@ -254,6 +255,7 @@ void TrackingTraceStateObserver::UpdateTraceCategoryState() {
 }
 
 void Environment::CreateProperties() {
+  EnvironmentScope env_scope(this);
   HandleScope handle_scope(isolate_);
   Local<Context> ctx = context();
 
@@ -447,6 +449,10 @@ void Environment::InitializeMainContext(Local<Context> context,
     CreateProperties();
   }
 
+  std::string is_monitor_mode;
+  credentials::SafeGetenv("NODE_CFX_IS_MONITOR_MODE", &is_monitor_mode, this);
+  is_monitor_mode_ = is_monitor_mode == "1";
+
   if (!options_->force_async_hooks_checks) {
     async_hooks_.no_force_checks();
   }
@@ -470,6 +476,7 @@ Environment::~Environment() {
     *interrupt_data = nullptr;
 
     Isolate::AllowJavascriptExecutionScope allow_js_here(isolate());
+    EnvironmentScope env_scope(this);
     HandleScope handle_scope(isolate());
     TryCatch try_catch(isolate());
     Context::Scope context_scope(context());
@@ -499,6 +506,7 @@ Environment::~Environment() {
   isolate()->GetHeapProfiler()->RemoveBuildEmbedderGraphCallback(
       BuildEmbedderGraph, this);
 
+  EnvironmentScope env_scope(this);
   HandleScope handle_scope(isolate());
 
 #if HAVE_INSPECTOR
@@ -536,6 +544,7 @@ Environment::~Environment() {
 }
 
 void Environment::InitializeLibuv() {
+  EnvironmentScope env_scope(this);
   HandleScope handle_scope(isolate());
   Context::Scope context_scope(context());
 
@@ -562,6 +571,8 @@ void Environment::InitializeLibuv() {
       [](uv_async_t* async) {
         Environment* env = ContainerOf(
             &Environment::task_queues_async_, async);
+
+        EnvironmentScope env_scope(env);
         HandleScope handle_scope(env->isolate());
         Context::Scope context_scope(env->context());
         env->RunAndClearNativeImmediates();
@@ -660,6 +671,7 @@ void Environment::StartProfilerIdleNotifier() {
 void Environment::PrintSyncTrace() const {
   if (!trace_sync_io_) return;
 
+  EnvironmentScope env_scope(this);
   HandleScope handle_scope(isolate());
 
   fprintf(
@@ -743,6 +755,7 @@ void Environment::RunAndClearInterrupts() {
 void Environment::RunAndClearNativeImmediates(bool only_refed) {
   TraceEventScope trace_scope(TRACING_CATEGORY_NODE1(environment),
                               "RunAndClearNativeImmediates", this);
+  EnvironmentScope env_scope(this);
   HandleScope handle_scope(isolate_);
   InternalCallbackScope cb_scope(this, Object::New(isolate_), { 0, 0 });
 
@@ -852,6 +865,7 @@ void Environment::RunTimers(uv_timer_t* handle) {
   if (!env->can_call_into_js())
     return;
 
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -911,6 +925,7 @@ void Environment::CheckImmediate(uv_check_t* handle) {
   TraceEventScope trace_scope(TRACING_CATEGORY_NODE1(environment),
                               "CheckImmediate", env);
 
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Context::Scope context_scope(env->context());
 
@@ -1066,6 +1081,7 @@ AsyncHooks::AsyncHooks(Isolate* isolate, const SerializeInfo* info)
       async_id_fields_(
           isolate, kUidFieldsCount, MAYBE_FIELD_PTR(info, async_id_fields)),
       info_(info) {
+  EnvironmentScope env_scope(Environment::GetCurrent(isolate));
   HandleScope handle_scope(isolate);
   if (info == nullptr) {
     clear_async_id_stack();
@@ -1184,6 +1200,7 @@ void AsyncHooks::grow_async_ids_stack() {
 
 void Environment::Exit(int exit_code) {
   if (options()->trace_exit) {
+    EnvironmentScope env_scope(this);
     HandleScope handle_scope(isolate());
     Isolate::DisallowJavascriptExecutionScope disallow_js(
         isolate(), Isolate::DisallowJavascriptExecutionScope::CRASH_ON_FAILURE);
@@ -1404,6 +1421,7 @@ void Environment::EnqueueDeserializeRequest(DeserializeRequestCallback cb,
 }
 
 void Environment::RunDeserializeRequests() {
+  EnvironmentScope env_scope(this);
   HandleScope scope(isolate());
   Local<Context> ctx = context();
   Isolate* is = isolate();
@@ -1643,6 +1661,28 @@ inline size_t Environment::SelfSize() const {
   return size;
 }
 
+static std::function<void(const Environment*)> scope_enter_func;
+static std::function<void(const Environment*)> scope_exit_func;
+
+void Environment::EnterScope() const {
+  if (scope_enter_func) {
+    scope_enter_func(this);
+  }
+}
+
+void Environment::ExitScope() const {
+  if (scope_exit_func) {
+    scope_exit_func(this);
+  }
+}
+
+void Environment::SetScopeHandler(
+    const std::function<void(const Environment*)>& enter,
+    const std::function<void(const Environment*)>& exit) {
+  scope_enter_func = enter;
+  scope_exit_func = exit;
+}
+
 void Environment::MemoryInfo(MemoryTracker* tracker) const {
   // Iteratable STLs have their own sizes subtracted from the parent
   // by default.
@@ -1714,5 +1754,13 @@ Local<FunctionTemplate> BaseObject::GetConstructorTemplate(Environment* env) {
 bool BaseObject::IsNotIndicativeOfMemoryLeakAtExit() const {
   return IsWeakOrDetached();
 }
+
+EnvironmentScope::EnvironmentScope(const Environment* env) : env_(env) {
+  if (env) env->EnterScope();
+}
+
+EnvironmentScope::EnvironmentScope(v8::Isolate* isolate) : EnvironmentScope(Environment::GetCurrent(isolate)) { }
+
+EnvironmentScope::~EnvironmentScope() { if (env_) env_->ExitScope(); }
 
 }  // namespace node

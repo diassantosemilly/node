@@ -211,6 +211,7 @@ Local<Array> RealEnvStore::Enumerate(Isolate* isolate) const {
 }
 
 std::shared_ptr<KVStore> KVStore::Clone(Isolate* isolate) const {
+  EnvironmentScope env_scope(isolate);
   HandleScope handle_scope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
 
@@ -292,6 +293,7 @@ std::shared_ptr<KVStore> KVStore::CreateMapKVStore() {
 Maybe<bool> KVStore::AssignFromObject(Local<Context> context,
                                       Local<Object> entries) {
   Isolate* isolate = context->GetIsolate();
+  EnvironmentScope env_scope(isolate);
   HandleScope handle_scope(isolate);
   Local<Array> keys;
   if (!entries->GetOwnPropertyNames(context).ToLocal(&keys))
@@ -397,6 +399,7 @@ static void EnvEnumerator(const PropertyCallbackInfo<Array>& info) {
 }
 
 MaybeLocal<Object> CreateEnvVarProxy(Local<Context> context, Isolate* isolate) {
+  EnvironmentScope env_scope(isolate);
   EscapableHandleScope scope(isolate);
   Local<ObjectTemplate> env_proxy_template = ObjectTemplate::New(isolate);
   env_proxy_template->SetHandler(NamedPropertyHandlerConfiguration(

@@ -127,6 +127,7 @@ NodeMainInstance::~NodeMainInstance() {
 int NodeMainInstance::Run(const EnvSerializeInfo* env_info) {
   Locker locker(isolate_);
   Isolate::Scope isolate_scope(isolate_);
+  EnvironmentScope env_scope(isolate_);
   HandleScope handle_scope(isolate_);
 
   int exit_code = 0;
@@ -171,6 +172,7 @@ NodeMainInstance::CreateMainEnvironment(int* exit_code,
                                         const EnvSerializeInfo* env_info) {
   *exit_code = 0;  // Reset the exit code to 0
 
+  EnvironmentScope env_scope(isolate_);
   HandleScope handle_scope(isolate_);
 
   // TODO(addaleax): This should load a real per-Isolate option, currently

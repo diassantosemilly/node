@@ -1645,6 +1645,7 @@ void Parse(Environment* env,
            Local<Function> cb,
            Local<Value> error_cb) {
   Isolate* isolate = env->isolate();
+  EnvironmentScope env_scope(env);
   Local<Context> context = env->context();
   HandleScope handle_scope(isolate);
   Context::Scope context_scope(context);

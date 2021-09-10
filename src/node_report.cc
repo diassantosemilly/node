@@ -548,6 +548,7 @@ static void PrintJavaScriptErrorStack(JSONWriter* writer,
                                       Local<Value> error,
                                       const char* trigger) {
   TryCatch try_catch(isolate);
+  node::EnvironmentScope env_scope(isolate);
   HandleScope scope(isolate);
   Local<Context> context = isolate->GetCurrentContext();
   std::string ss = "";

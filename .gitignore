@@ -44,7 +44,7 @@
 
 # === Rules for artifacts of `./configure` ===
 /icu_config.gypi
-/config.gypi
+#/config.gypi
 /config.status
 /config_fips.gypi
 
@@ -155,3 +155,6 @@ install_manifest.txt
 __pycache__
 .DS_Store
 *~
+
+src/node_javascript.cc
+gen

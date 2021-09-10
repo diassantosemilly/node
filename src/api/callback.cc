@@ -61,8 +61,8 @@ InternalCallbackScope::InternalCallbackScope(Environment* env,
     return;
   }
 
+  EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
-
   HandleScope handle_scope(isolate);
   // If you hit this assertion, you forgot to enter the v8::Context first.
   CHECK_EQ(Environment::GetCurrent(isolate), env);
@@ -90,6 +90,7 @@ void InternalCallbackScope::Close() {
   if (closed_) return;
   closed_ = true;
 
+  EnvironmentScope env_scope(env_);
   Isolate* isolate = env_->isolate();
   auto idle = OnScopeLeave([&]() { isolate->SetIdle(true); });
 
@@ -318,6 +319,7 @@ Local<Value> MakeCallback(Isolate* isolate,
                           const char* method,
                           int argc,
                           Local<Value>* argv) {
+  EnvironmentScope env_scope(isolate);
   EscapableHandleScope handle_scope(isolate);
   return handle_scope.Escape(
       MakeCallback(isolate, recv, method, argc, argv, {0, 0})
@@ -329,6 +331,7 @@ Local<Value> MakeCallback(Isolate* isolate,
                           Local<String> symbol,
                           int argc,
                           Local<Value>* argv) {
+  EnvironmentScope env_scope(isolate);
   EscapableHandleScope handle_scope(isolate);
   return handle_scope.Escape(
       MakeCallback(isolate, recv, symbol, argc, argv, {0, 0})
@@ -340,6 +343,7 @@ Local<Value> MakeCallback(Isolate* isolate,
                           Local<Function> callback,
                           int argc,
                           Local<Value>* argv) {
+  EnvironmentScope env_scope(isolate);
   EscapableHandleScope handle_scope(isolate);
   return handle_scope.Escape(
       MakeCallback(isolate, recv, callback, argc, argv, {0, 0})

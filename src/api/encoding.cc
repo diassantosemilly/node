@@ -139,6 +139,7 @@ Local<Value> Encode(Isolate* isolate, const uint16_t* buf, size_t len) {
 ssize_t DecodeBytes(Isolate* isolate,
                     Local<Value> val,
                     enum encoding encoding) {
+  EnvironmentScope env_scope(isolate);
   HandleScope scope(isolate);
 
   return StringBytes::Size(isolate, val, encoding).FromMaybe(-1);

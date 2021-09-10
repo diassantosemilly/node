@@ -61,6 +61,7 @@ BaseObject::~BaseObject() {
   }
 
   {
+    EnvironmentScope env_scope(env());
     v8::HandleScope handle_scope(env()->isolate());
     object()->SetAlignedPointerInInternalField(BaseObject::kSlot, nullptr);
   }

@@ -68,6 +68,7 @@ ModuleWrap::ModuleWrap(Environment* env,
 }
 
 ModuleWrap::~ModuleWrap() {
+  EnvironmentScope env_scope(env());
   HandleScope scope(env()->isolate());
   Local<Module> module = module_.Get(env()->isolate());
   env()->id_to_module_map.erase(id_);
@@ -561,6 +562,7 @@ static MaybeLocal<Promise> ImportModuleDynamically(
     return MaybeLocal<Promise>();
   }
 
+  EnvironmentScope env_scope(env);
   EscapableHandleScope handle_scope(isolate);
 
   Local<Function> import_callback =
@@ -624,6 +626,7 @@ void ModuleWrap::SetImportModuleDynamicallyCallback(
     const FunctionCallbackInfo<Value>& args) {
   Isolate* isolate = args.GetIsolate();
   Environment* env = Environment::GetCurrent(args);
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(isolate);
 
   CHECK_EQ(args.Length(), 1);

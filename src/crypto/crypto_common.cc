@@ -756,6 +756,7 @@ MaybeLocal<Value> GetCipherVersion(Environment* env, const SSLPointer& ssl) {
 MaybeLocal<Array> GetClientHelloCiphers(
     Environment* env,
     const SSLPointer& ssl) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   const unsigned char* buf;
   size_t len = SSL_client_hello_get0_ciphers(ssl.get(), &buf);
@@ -790,6 +791,7 @@ MaybeLocal<Array> GetClientHelloCiphers(
 MaybeLocal<Object> GetCipherInfo(Environment* env, const SSLPointer& ssl) {
   if (SSL_get_current_cipher(ssl.get()) == nullptr)
     return MaybeLocal<Object>();
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   Local<Object> info = Object::New(env->isolate());
 
@@ -815,6 +817,7 @@ MaybeLocal<Object> GetEphemeralKey(Environment* env, const SSLPointer& ssl) {
   CHECK_EQ(SSL_is_server(ssl.get()), 0);
   EVP_PKEY* raw_key;
 
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   Local<Object> info = Object::New(env->isolate());
   if (!SSL_get_server_tmp_key(ssl.get(), &raw_key))
@@ -962,6 +965,7 @@ MaybeLocal<Value> GetPeerCert(
 }
 
 MaybeLocal<Object> X509ToObject(Environment* env, X509* cert) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   Local<Context> context = env->context();
   Local<Object> info = Object::New(env->isolate());

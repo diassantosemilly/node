@@ -81,6 +81,7 @@ static void WriteResult(Environment* env,
 void V8ProfilerConnection::V8ProfilerSessionDelegate::SendMessageToFrontend(
     const v8_inspector::StringView& message) {
   Environment* env = connection_->env();
+  EnvironmentScope env_scope(env);
   Isolate* isolate = env->isolate();
   HandleScope handle_scope(isolate);
   Local<Context> context = env->context();
@@ -214,6 +215,7 @@ void V8ProfilerConnection::WriteProfile(Local<Object> result) {
 }
 
 void V8CoverageConnection::WriteProfile(Local<Object> result) {
+  EnvironmentScope env_scope(env_);
   Isolate* isolate = env_->isolate();
   Local<Context> context = env_->context();
   HandleScope handle_scope(isolate);

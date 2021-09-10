@@ -241,6 +241,7 @@ MaybeLocal<Function> NativeModuleLoader::LookupAndCompile(
     std::vector<Local<String>>* parameters,
     NativeModuleLoader::Result* result) {
   Isolate* isolate = context->GetIsolate();
+  EnvironmentScope env_scope(isolate);
   EscapableHandleScope scope(isolate);
 
   Local<String> source;
@@ -263,7 +264,9 @@ MaybeLocal<Function> NativeModuleLoader::LookupAndCompile(
     auto cache_it = code_cache_.find(id);
     if (cache_it != code_cache_.end()) {
       // Transfer ownership to ScriptCompiler::Source later.
+#ifndef _DEBUG
       cached_data = cache_it->second.release();
+#endif
       code_cache_.erase(cache_it);
     }
   }
@@ -301,6 +304,7 @@ MaybeLocal<Function> NativeModuleLoader::LookupAndCompile(
   *result = (has_cache && !script_source.GetCachedData()->rejected)
                 ? Result::kWithCache
                 : Result::kWithoutCache;
+#ifndef _DEBUG
   // Generate new cache for next compilation
   std::unique_ptr<ScriptCompiler::CachedData> new_cached_data(
       ScriptCompiler::CreateCodeCacheForFunction(fun));
@@ -313,6 +317,7 @@ MaybeLocal<Function> NativeModuleLoader::LookupAndCompile(
     // be an issue.
     code_cache_.emplace(id, std::move(new_cached_data));
   }
+#endif
 
   return scope.Escape(fun);
 }

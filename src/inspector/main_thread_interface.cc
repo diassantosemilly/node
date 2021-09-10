@@ -249,6 +249,7 @@ void MainThreadInterface::DispatchMessages() {
       std::swap(dispatching_message_queue_.front(), task);
       dispatching_message_queue_.pop_front();
 
+      EnvironmentScope env_scope(agent_->env());
       v8::SealHandleScope seal_handle_scope(agent_->env()->isolate());
       task->Call(this);
     }

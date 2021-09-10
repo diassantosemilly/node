@@ -215,6 +215,7 @@ ByteSource ConvertSignatureToDER(
 }
 
 void CheckThrow(Environment* env, SignBase::Error error) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
 
   switch (error) {

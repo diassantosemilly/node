@@ -112,7 +112,7 @@ struct AssertionInfo {
 void DumpBacktrace(FILE* fp);
 
 // Windows 8+ does not like abort() in Release mode
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(_DEBUG)
 #define ABORT_NO_BACKTRACE() _exit(134)
 #else
 #define ABORT_NO_BACKTRACE() abort()

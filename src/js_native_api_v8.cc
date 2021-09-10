@@ -111,10 +111,11 @@ NodePersistentFromJsDeferred(napi_deferred local) {
 
 class HandleScopeWrapper {
  public:
-  explicit HandleScopeWrapper(v8::Isolate* isolate) : scope(isolate) {}
+  explicit HandleScopeWrapper(v8::Isolate* isolate) : scope(isolate), env_scope(isolate) {}
 
  private:
   v8::HandleScope scope;
+  node::EnvironmentScope env_scope;
 };
 
 // In node v0.10 version of v8, there is no EscapableHandleScope and the
@@ -125,7 +126,7 @@ class HandleScopeWrapper {
 class EscapableHandleScopeWrapper {
  public:
   explicit EscapableHandleScopeWrapper(v8::Isolate* isolate)
-      : scope(isolate), escape_called_(false) {}
+      : scope(isolate), env_scope(isolate), escape_called_(false) {}
   bool escape_called() const {
     return escape_called_;
   }
@@ -137,6 +138,7 @@ class EscapableHandleScopeWrapper {
 
  private:
   v8::EscapableHandleScope scope;
+  node::EnvironmentScope env_scope;
   bool escape_called_;
 };
 
@@ -782,6 +784,7 @@ napi_status napi_create_function(napi_env env,
   CHECK_ARG(env, cb);
 
   v8::Local<v8::Function> return_value;
+  node::EnvironmentScope env_scope(env->isolate);
   v8::EscapableHandleScope scope(env->isolate);
   v8::Local<v8::Function> fn;
   STATUS_CALL(v8impl::FunctionCallbackWrapper::NewFunction(
@@ -817,6 +820,7 @@ napi_status napi_define_class(napi_env env,
 
   v8::Isolate* isolate = env->isolate;
 
+  node::EnvironmentScope env_scope(env->isolate);
   v8::EscapableHandleScope scope(isolate);
   v8::Local<v8::FunctionTemplate> tpl;
   STATUS_CALL(v8impl::FunctionCallbackWrapper::NewTemplate(

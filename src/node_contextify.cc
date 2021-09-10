@@ -127,6 +127,7 @@ ContextifyContext::ContextifyContext(
 
 ContextifyContext::~ContextifyContext() {
   env()->RemoveCleanupHook(CleanupHook, this);
+  EnvironmentScope env_scope(env());
   Isolate* isolate = env()->isolate();
   HandleScope scope(isolate);
 
@@ -163,6 +164,7 @@ MaybeLocal<Context> ContextifyContext::CreateV8Context(
     Environment* env,
     Local<Object> sandbox_obj,
     const ContextOptions& options) {
+  EnvironmentScope env_scope(env);
   EscapableHandleScope scope(env->isolate());
   Local<FunctionTemplate> function_template =
       FunctionTemplate::New(env->isolate());
@@ -661,6 +663,7 @@ void ContextifyContext::IndexedPropertyDeleterCallback(
 }
 
 void ContextifyScript::Init(Environment* env, Local<Object> target) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Local<String> class_name =
       FIXED_ONE_BYTE_STRING(env->isolate(), "ContextifyScript");
@@ -1308,6 +1311,7 @@ void MicrotaskQueueWrap::New(const FunctionCallbackInfo<Value>& args) {
 }
 
 void MicrotaskQueueWrap::Init(Environment* env, Local<Object> target) {
+  EnvironmentScope env_scope(env);
   HandleScope scope(env->isolate());
   Local<FunctionTemplate> tmpl = env->NewFunctionTemplate(New);
   tmpl->InstanceTemplate()->SetInternalFieldCount(

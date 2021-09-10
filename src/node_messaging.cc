@@ -137,6 +137,7 @@ MaybeLocal<Value> Message::Deserialize(Environment* env,
     *port_list = Array::New(env->isolate());
   }
 
+  EnvironmentScope env_scope(env);
   EscapableHandleScope handle_scope(env->isolate());
 
   // Create all necessary objects for transferables, e.g. MessagePort handles.
@@ -153,6 +154,7 @@ MaybeLocal<Value> Message::Deserialize(Environment* env,
   });
 
   for (uint32_t i = 0; i < transferables_.size(); ++i) {
+    EnvironmentScope env_scope(env);
     HandleScope handle_scope(env->isolate());
     TransferData* data = transferables_[i].get();
     host_objects[i] = data->Deserialize(
@@ -408,6 +410,7 @@ Maybe<bool> Message::Serialize(Environment* env,
                                Local<Value> input,
                                const TransferList& transfer_list_v,
                                Local<Object> source_port) {
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Context::Scope context_scope(context);
 
@@ -726,6 +729,7 @@ MaybeLocal<Value> MessagePort::ReceiveMessage(Local<Context> context,
 
 void MessagePort::OnMessage(MessageProcessingMode mode) {
   Debug(this, "Running MessagePort::OnMessage()");
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   Local<Context> context =
       object(env()->isolate())->GetCreationContext().ToLocalChecked();
@@ -756,6 +760,7 @@ void MessagePort::OnMessage(MessageProcessingMode mode) {
       return;
     }
 
+    EnvironmentScope env_scope(env());
     HandleScope handle_scope(env()->isolate());
     Context::Scope context_scope(context);
     Local<Function> emit_message = PersistentToLocal::Strong(emit_message_fn_);
@@ -1138,6 +1143,7 @@ void JSTransferable::New(const FunctionCallbackInfo<Value>& args) {
 
 JSTransferable::TransferMode JSTransferable::GetTransferMode() const {
   // Implement `kClone in this ? kCloneable : kTransferable`.
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   errors::TryCatchScope ignore_exceptions(env());
 
@@ -1164,6 +1170,7 @@ std::unique_ptr<TransferData> JSTransferable::TransferOrClone(
   // which should return an object with `data` and `deserializeInfo` properties;
   // `data` is written to the serializer later, and `deserializeInfo` is stored
   // on the `TransferData` instance as a string.
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   Local<Context> context = env()->isolate()->GetCurrentContext();
   Local<Symbol> method_name = mode == TransferMode::kCloneable ?
@@ -1205,6 +1212,7 @@ std::unique_ptr<TransferData> JSTransferable::TransferOrClone(
 Maybe<BaseObjectList>
 JSTransferable::NestedTransferables() const {
   // Call `this[kTransferList]()` and return the resulting list of BaseObjects.
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   Local<Context> context = env()->isolate()->GetCurrentContext();
   Local<Symbol> method_name = env()->messaging_transfer_list_symbol();
@@ -1238,6 +1246,7 @@ Maybe<bool> JSTransferable::FinalizeTransferRead(
     Local<Context> context, ValueDeserializer* deserializer) {
   // Call `this[kDeserialize](data)` where `data` comes from the return value
   // of `this[kTransfer]()` or `this[kClone]()`.
+  EnvironmentScope env_scope(env());
   HandleScope handle_scope(env()->isolate());
   Local<Value> data;
   if (!deserializer->ReadValue(context).ToLocal(&data)) return Nothing<bool>();
@@ -1274,6 +1283,7 @@ BaseObjectPtr<BaseObject> JSTransferable::Data::Deserialize(
     THROW_ERR_MESSAGE_TARGET_CONTEXT_UNAVAILABLE(env);
     return {};
   }
+  EnvironmentScope env_scope(env);
   HandleScope handle_scope(env->isolate());
   Local<Value> info;
   if (!ToV8Value(context, deserialize_info_).ToLocal(&info)) return {};
@@ -1291,6 +1301,7 @@ BaseObjectPtr<BaseObject> JSTransferable::Data::Deserialize(
 
 Maybe<bool> JSTransferable::Data::FinalizeTransferWrite(
     Local<Context> context, ValueSerializer* serializer) {
+  EnvironmentScope env_scope(context->GetIsolate());
   HandleScope handle_scope(context->GetIsolate());
   auto ret = serializer->WriteValue(context, PersistentToLocal::Strong(data_));
   data_.Reset();

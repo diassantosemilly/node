@@ -309,6 +309,7 @@ size_t StringBytes::Write(Isolate* isolate,
                           Local<Value> val,
                           enum encoding encoding,
                           int* chars_written) {
+  EnvironmentScope env_scope(isolate);
   HandleScope scope(isolate);
   size_t nbytes;
   int nchars;
@@ -397,6 +398,7 @@ size_t StringBytes::Write(Isolate* isolate,
 Maybe<size_t> StringBytes::StorageSize(Isolate* isolate,
                                        Local<Value> val,
                                        enum encoding encoding) {
+  EnvironmentScope env_scope(isolate);
   HandleScope scope(isolate);
   size_t data_size = 0;
   bool is_buffer = Buffer::HasInstance(val);
@@ -449,6 +451,7 @@ Maybe<size_t> StringBytes::StorageSize(Isolate* isolate,
 Maybe<size_t> StringBytes::Size(Isolate* isolate,
                                 Local<Value> val,
                                 enum encoding encoding) {
+  EnvironmentScope env_scope(isolate);
   HandleScope scope(isolate);
 
   if (Buffer::HasInstance(val) && (encoding == BUFFER || encoding == LATIN1))
