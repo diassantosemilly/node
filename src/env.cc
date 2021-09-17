@@ -635,9 +635,6 @@ void Environment::CleanupHandles() {
     task_queues_async_initialized_ = false;
   }
 
-  Isolate::DisallowJavascriptExecutionScope disallow_js(isolate(),
-      Isolate::DisallowJavascriptExecutionScope::THROW_ON_FAILURE);
-
   RunAndClearNativeImmediates(true /* skip unrefed SetImmediate()s */);
 
   for (ReqWrapBase* request : req_wrap_queue_)

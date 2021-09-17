@@ -370,8 +370,6 @@ Environment* CreateEnvironment(
 
 void FreeEnvironment(Environment* env) {
   Isolate* isolate = env->isolate();
-  Isolate::DisallowJavascriptExecutionScope disallow_js(isolate,
-      Isolate::DisallowJavascriptExecutionScope::THROW_ON_FAILURE);
   {
     HandleScope handle_scope(isolate);  // For env->context().
     Context::Scope context_scope(env->context());
